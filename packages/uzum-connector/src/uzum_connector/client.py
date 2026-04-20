@@ -214,6 +214,46 @@ class UzumClient:
             raise self._error_from_envelope(resp, status_code=200)
         return resp.payload
 
+    async def get_fbs_order(self, order_id: int) -> FbsOrder:
+        """GET /v1/fbs/order/{orderId}"""
+        data = await self._request("GET", f"/v1/fbs/order/{order_id}")
+        resp = GenericResponse[FbsOrder].model_validate(data)
+        if not resp.is_ok or resp.payload is None:
+            raise self._error_from_envelope(resp, status_code=200)
+        return resp.payload
+
+    async def confirm_fbs_order(self, order_id: int) -> FbsOrder:
+        """POST /v1/fbs/order/{orderId}/confirm"""
+        data = await self._request("POST", f"/v1/fbs/order/{order_id}/confirm")
+        resp = GenericResponse[FbsOrder].model_validate(data)
+        if not resp.is_ok or resp.payload is None:
+            raise self._error_from_envelope(resp, status_code=200)
+        return resp.payload
+
+    async def cancel_fbs_order(
+        self, order_id: int, *, reason: str, comment: str | None = None
+    ) -> None:
+        """POST /v1/fbs/order/{orderId}/cancel"""
+        body: dict[str, Any] = {"reason": reason}
+        if comment:
+            body["comment"] = comment
+        await self._request("POST", f"/v1/fbs/order/{order_id}/cancel", json=body)
+
+    async def get_fbs_order_label(self, order_id: int, *, size: str = "LARGE") -> bytes:
+        """GET /v1/fbs/order/{orderId}/labels/print → base64-decoded PDF bytes."""
+        import base64
+
+        data = await self._request(
+            "GET", f"/v1/fbs/order/{order_id}/labels/print", params={"size": size}
+        )
+        if not isinstance(data, dict):
+            raise ValueError("unexpected label response shape")
+        payload = data.get("payload") or {}
+        documents = payload.get("document") or []
+        if not documents:
+            raise ValueError("label service returned no document")
+        return base64.b64decode(documents[0])
+
     async def iter_fbs_orders(
         self,
         shop_ids: list[int],
