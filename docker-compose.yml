@@ -55,6 +55,26 @@ services:
     command: >
       sh -c "cd /app/backend && alembic upgrade heads && python -m anasklad.granian_entry"
 
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      APP_ENV: development
+      DATABASE_URL: postgresql+asyncpg://anasklad:anasklad_pass@postgres:5432/anasklad
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:-dev_secret_change_me_to_long_random_string_at_least_32_chars}
+      CREDENTIALS_FERNET_KEY: ${CREDENTIALS_FERNET_KEY:-}
+      LOG_LEVEL: INFO
+    command: >
+      sh -c "cd /app/backend && arq anasklad.modules.sync.worker.WorkerSettings"
+
 volumes:
   pg_data:
   redis_data:

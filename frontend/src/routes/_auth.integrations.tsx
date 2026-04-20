@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { catalogApi } from "@/api/catalog";
 import { type Integration, integrationsApi } from "@/api/integrations";
 import { IkatStripe } from "@/components/IkatStripe";
 import { Panel } from "@/components/Panel";
@@ -87,6 +88,14 @@ function IntegrationCard({ integration }: { integration: Integration }) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["integrations"] }),
   });
 
+  const syncMut = useMutation({
+    mutationFn: () => catalogApi.syncIntegration(integration.id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["integrations"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+
   const deleteMut = useMutation({
     mutationFn: () => integrationsApi.remove(integration.id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["integrations"] }),
@@ -106,6 +115,14 @@ function IntegrationCard({ integration }: { integration: Integration }) {
       title={integration.label}
       actions={
         <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => syncMut.mutate()}
+            disabled={syncMut.isPending}
+            className="ak-btn ak-btn-secondary text-xs"
+          >
+            {syncMut.isPending ? "Sync..." : "Sync"}
+          </button>
           <button
             type="button"
             onClick={() => testMut.mutate()}
@@ -139,6 +156,12 @@ function IntegrationCard({ integration }: { integration: Integration }) {
             </span>
           </span>
         </div>
+
+        {syncMut.data && (
+          <div className="border border-[var(--color-signal-up)]/40 bg-[var(--color-signal-up)]/5 px-3 py-2 text-xs text-[var(--color-signal-up)] rounded-sm font-mono">
+            ✓ {syncMut.data.products_upserted} mahsulot · {syncMut.data.variants_upserted} SKU sinxronlangan
+          </div>
+        )}
 
         {integration.last_error && (
           <div className="border border-[var(--color-signal-down)]/40 bg-[var(--color-signal-down)]/5 px-3 py-2 text-sm text-[var(--color-signal-down)] rounded-sm font-mono">
