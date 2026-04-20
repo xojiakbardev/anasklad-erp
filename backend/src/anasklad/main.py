@@ -18,6 +18,7 @@ from anasklad.core.observability.logging import configure_logging, log
 from anasklad.di.container import build_container
 from anasklad.modules.auth.api.router import router as auth_router
 from anasklad.modules.catalog.api.router import router as catalog_router
+from anasklad.modules.finance.api.router import router as finance_router
 from anasklad.modules.integrations.api.router import router as integrations_router
 from anasklad.modules.orders.api.router import router as orders_router
 
@@ -84,6 +85,7 @@ def create_app() -> FastAPI:
     app.include_router(integrations_router, prefix="/api")
     app.include_router(catalog_router, prefix="/api")
     app.include_router(orders_router, prefix="/api")
+    app.include_router(finance_router, prefix="/api")
 
     setup_dishka(container, app)
     return app

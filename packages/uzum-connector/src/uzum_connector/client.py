@@ -38,9 +38,11 @@ from uzum_connector.models import (
     FbsOrderScheme,
     FbsOrderStatus,
     FbsOrdersPage,
+    FinanceOrderItemsPage,
     GenericResponse,
     Product,
     ProductsPage,
+    SellerExpensesPage,
     Shop,
 )
 from uzum_connector.rate_limit import (
@@ -253,6 +255,57 @@ class UzumClient:
         if not documents:
             raise ValueError("label service returned no document")
         return base64.b64decode(documents[0])
+
+    async def list_finance_orders(
+        self,
+        shop_ids: list[int],
+        *,
+        statuses: list[str] | None = None,
+        date_from_ms: int | None = None,
+        date_to_ms: int | None = None,
+        page: int = 0,
+        size: int = 50,
+    ) -> FinanceOrderItemsPage:
+        """GET /v1/finance/orders — flat seller order items (group=false)."""
+        if not shop_ids:
+            raise ValueError("shop_ids must not be empty")
+        params: dict[str, Any] = {
+            "shopIds": shop_ids,
+            "page": page,
+            "size": size,
+            "group": False,
+        }
+        if statuses:
+            params["statuses"] = statuses
+        if date_from_ms is not None:
+            params["dateFrom"] = date_from_ms
+        if date_to_ms is not None:
+            params["dateTo"] = date_to_ms
+        data = await self._request("GET", "/v1/finance/orders", params=params)
+        return FinanceOrderItemsPage.model_validate(data)
+
+    async def list_finance_expenses(
+        self,
+        *,
+        shop_ids: list[int] | None = None,
+        date_from_ms: int | None = None,
+        date_to_ms: int | None = None,
+        page: int = 0,
+        size: int = 100,
+    ) -> SellerExpensesPage:
+        """GET /v1/finance/expenses"""
+        params: dict[str, Any] = {"page": page, "size": size}
+        if shop_ids:
+            params["shopIds"] = shop_ids
+        if date_from_ms is not None:
+            params["dateFrom"] = date_from_ms
+        if date_to_ms is not None:
+            params["dateTo"] = date_to_ms
+        data = await self._request("GET", "/v1/finance/expenses", params=params)
+        resp = GenericResponse[SellerExpensesPage].model_validate(data)
+        if not resp.is_ok or resp.payload is None:
+            return SellerExpensesPage()
+        return resp.payload
 
     async def iter_fbs_orders(
         self,

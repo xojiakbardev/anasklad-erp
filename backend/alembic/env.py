@@ -17,6 +17,7 @@ from anasklad.core.db.base import Base
 from anasklad.modules.auth.infrastructure import models as _auth_models  # noqa: F401
 from anasklad.modules.catalog.infrastructure import models as _catalog_models  # noqa: F401
 from anasklad.modules.integrations.infrastructure import models as _integrations_models  # noqa: F401
+from anasklad.modules.finance.infrastructure import models as _finance_models  # noqa: F401
 from anasklad.modules.orders.infrastructure import models as _orders_models  # noqa: F401
 
 config = context.config

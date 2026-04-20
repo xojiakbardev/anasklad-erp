@@ -5,6 +5,15 @@ from uzum_connector.models.common import (
     PaginatedResponse,
     Photo,
 )
+from uzum_connector.models.finance import (
+    ExpenseStatus,
+    ExpenseType,
+    FinanceOrderItem,
+    FinanceOrderItemsPage,
+    FinanceOrderStatus,
+    SellerExpense,
+    SellerExpensesPage,
+)
 from uzum_connector.models.order import (
     FbsOrder,
     FbsOrderItem,
@@ -35,4 +44,11 @@ __all__ = [
     "ProductsPage",
     "Sku",
     "Shop",
+    "ExpenseStatus",
+    "ExpenseType",
+    "FinanceOrderItem",
+    "FinanceOrderItemsPage",
+    "FinanceOrderStatus",
+    "SellerExpense",
+    "SellerExpensesPage",
 ]

@@ -13,15 +13,17 @@ from typing import Any
 from arq.connections import RedisSettings
 from arq.cron import cron
 from dishka import AsyncContainer, Scope
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from anasklad.config import Settings, get_settings
 from anasklad.core.observability.logging import configure_logging, log
 from anasklad.di.container import build_container
 from anasklad.modules.catalog.application.sync_uzum import CatalogSyncService
+from anasklad.modules.finance.application.service import FinanceService
 from anasklad.modules.integrations.domain.entities import IntegrationStatus
 from anasklad.modules.integrations.infrastructure.models import IntegrationModel
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
+from anasklad.modules.orders.application.service import OrderService
 
 logger = logging.getLogger("anasklad.sync")
 
@@ -29,7 +31,6 @@ logger = logging.getLogger("anasklad.sync")
 async def sync_catalog_for_integration(
     ctx: dict[str, Any], integration_id: str, tenant_id: str
 ) -> dict[str, Any]:
-    """On-demand: sync one integration's catalog."""
     container: AsyncContainer = ctx["container"]
     async with container(scope=Scope.REQUEST) as req:
         service = await req.get(CatalogSyncService)
@@ -44,14 +45,53 @@ async def sync_catalog_for_integration(
         variants=result.variants_upserted,
     )
     return {
-        "integration_id": str(result.integration_id),
         "products_upserted": result.products_upserted,
         "variants_upserted": result.variants_upserted,
     }
 
 
-async def sync_catalog_cron(ctx: dict[str, Any]) -> None:
-    """Scheduled: sync catalog for every active integration."""
+async def sync_orders_for_integration(
+    ctx: dict[str, Any], integration_id: str, tenant_id: str
+) -> dict[str, Any]:
+    container: AsyncContainer = ctx["container"]
+    async with container(scope=Scope.REQUEST) as req:
+        service = await req.get(OrderService)
+        result = await service.sync(
+            integration_id=uuid.UUID(integration_id),
+            tenant_id=uuid.UUID(tenant_id),
+        )
+    log.info(
+        "sync.orders.done",
+        integration_id=integration_id,
+        orders=result.orders_upserted,
+    )
+    return {"orders_upserted": result.orders_upserted}
+
+
+async def sync_finance_for_integration(
+    ctx: dict[str, Any], integration_id: str, tenant_id: str
+) -> dict[str, Any]:
+    container: AsyncContainer = ctx["container"]
+    async with container(scope=Scope.REQUEST) as req:
+        service = await req.get(FinanceService)
+        result = await service.sync(
+            integration_id=uuid.UUID(integration_id),
+            tenant_id=uuid.UUID(tenant_id),
+            days_back=30,
+        )
+    log.info(
+        "sync.finance.done",
+        integration_id=integration_id,
+        sales=result.sales_upserted,
+        expenses=result.expenses_upserted,
+    )
+    return {
+        "sales_upserted": result.sales_upserted,
+        "expenses_upserted": result.expenses_upserted,
+    }
+
+
+async def _fanout_active_integrations(ctx: dict[str, Any], job_name: str) -> None:
     container: AsyncContainer = ctx["container"]
     async with container(scope=Scope.REQUEST) as req:
         session_factory: async_sessionmaker[AsyncSession] = await req.get(
@@ -63,16 +103,26 @@ async def sync_catalog_cron(ctx: dict[str, Any]) -> None:
             )
             rows = (await session.execute(stmt)).all()
 
-    log.info("sync.catalog.cron.started", integrations=len(rows))
-
+    log.info("sync.cron.fanout", job=job_name, integrations=len(rows))
     for integration_id, tenant_id in rows:
-        # Schedule per-integration job — non-blocking, isolated failure.
         await ctx["redis"].enqueue_job(
-            "sync_catalog_for_integration",
+            job_name,
             str(integration_id),
             str(tenant_id),
-            _job_id=f"sync_catalog:{integration_id}",
+            _job_id=f"{job_name}:{integration_id}",
         )
+
+
+async def sync_catalog_cron(ctx: dict[str, Any]) -> None:
+    await _fanout_active_integrations(ctx, "sync_catalog_for_integration")
+
+
+async def sync_orders_cron(ctx: dict[str, Any]) -> None:
+    await _fanout_active_integrations(ctx, "sync_orders_for_integration")
+
+
+async def sync_finance_cron(ctx: dict[str, Any]) -> None:
+    await _fanout_active_integrations(ctx, "sync_finance_for_integration")
 
 
 async def on_startup(ctx: dict[str, Any]) -> None:
@@ -91,7 +141,6 @@ async def on_shutdown(ctx: dict[str, Any]) -> None:
 
 def _redis_settings() -> RedisSettings:
     s: Settings = get_settings()
-    # Parse redis://host:port/db
     url = s.redis_url.replace("redis://", "")
     host, rest = url.split(":", 1)
     port_db = rest.split("/", 1)
@@ -101,11 +150,15 @@ def _redis_settings() -> RedisSettings:
 
 
 class WorkerSettings:
-    """Entry point for `arq`."""
-
-    functions = [sync_catalog_for_integration]
+    functions = [
+        sync_catalog_for_integration,
+        sync_orders_for_integration,
+        sync_finance_for_integration,
+    ]
     cron_jobs = [
-        cron(sync_catalog_cron, minute={0, 30}),  # every 30 minutes
+        cron(sync_orders_cron, minute=set(range(0, 60, 2))),     # every 2 min
+        cron(sync_finance_cron, minute=set(range(0, 60, 10))),   # every 10 min
+        cron(sync_catalog_cron, minute={0, 30}),                 # every 30 min
     ]
     on_startup = on_startup
     on_shutdown = on_shutdown
