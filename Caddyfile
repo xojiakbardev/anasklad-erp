@@ -1,0 +1,35 @@
+# Caddy config — automatic Let's Encrypt TLS + reverse proxy.
+# Replace the hostname before deploy.
+
+{$DOMAIN:anasklad.uz} {
+    encode zstd gzip
+
+    # Backend API
+    handle_path /api/* {
+        reverse_proxy api:8000
+    }
+
+    # Health endpoints (bypass SPA fallback)
+    handle /health/* {
+        reverse_proxy api:8000
+    }
+
+    # Static SPA
+    reverse_proxy web:80
+
+    # Headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    }
+
+    log {
+        output file /data/access.log {
+            roll_size 50MiB
+            roll_keep 7
+        }
+        format json
+    }
+}

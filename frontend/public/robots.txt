@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /$
+Allow: /help
+Disallow: /api/
+Disallow: /integrations
+Disallow: /products
+Disallow: /orders
+Disallow: /stocks
+Disallow: /finance
+Disallow: /reports
