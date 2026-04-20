@@ -1,0 +1,271 @@
+@import "tailwindcss";
+
+/* ----- design tokens (from DESIGN.md) ----- */
+@theme {
+  --color-bg-deep: #0e0d0b;
+  --color-bg-raised: #161412;
+  --color-bg-elevated: #1e1b18;
+  --color-bg-sunken: #090807;
+
+  --color-border-hair: #2a2622;
+  --color-border-sub: #3a342e;
+  --color-border-focus: #d9a85a;
+
+  --color-fg-primary: #f2eadc;
+  --color-fg-muted: #a89f8f;
+  --color-fg-dim: #6e6658;
+
+  --color-accent-gold: #d9a85a;
+  --color-accent-deep: #8a6a2e;
+  --color-accent-ink: #4ba3c3;
+
+  --color-signal-up: #7aae4c;
+  --color-signal-down: #c05151;
+  --color-signal-warn: #e0a43a;
+  --color-signal-info: #4ba3c3;
+
+  --color-ikat-red: #a73935;
+  --color-ikat-indigo: #2d4564;
+  --color-ikat-cream: #e8d7a8;
+
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --radius-none: 0;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}
+
+/* ----- base ----- */
+* {
+  border-color: var(--color-border-hair);
+}
+
+html,
+body {
+  background: var(--color-bg-deep);
+  color: var(--color-fg-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(217, 168, 90, 0.04), transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(75, 163, 195, 0.03), transparent 40%);
+  min-height: 100vh;
+}
+
+/* Selection */
+::selection {
+  background: var(--color-accent-gold);
+  color: var(--color-bg-deep);
+}
+
+/* Scrollbar — subtle, gold */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg-deep);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-sub);
+  border: 2px solid var(--color-bg-deep);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-deep);
+}
+
+/* ----- utility-friendly primitives ----- */
+
+.ledger-number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums slashed-zero;
+  letter-spacing: -0.01em;
+}
+
+.label-micro {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-fg-muted);
+  font-weight: 500;
+}
+
+.display-title {
+  font-family: var(--font-display);
+  font-feature-settings: "opsz" 96;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+/* ----- Signature: ikat stripe ----- */
+.ikat-stripe {
+  --ikat-width: 6px;
+  width: var(--ikat-width);
+  background-color: var(--color-bg-elevated);
+  background-image:
+    linear-gradient(
+      to bottom,
+      var(--color-ikat-red) 0 4px,
+      var(--color-bg-elevated) 4px 6px,
+      var(--color-ikat-indigo) 6px 14px,
+      var(--color-bg-elevated) 14px 18px,
+      var(--color-ikat-cream) 18px 22px,
+      var(--color-bg-elevated) 22px 28px,
+      var(--color-ikat-red) 28px 30px,
+      var(--color-bg-elevated) 30px 36px,
+      var(--color-ikat-indigo) 36px 44px,
+      var(--color-bg-elevated) 44px 48px,
+      var(--color-ikat-cream) 48px 54px,
+      var(--color-bg-elevated) 54px 60px,
+      var(--color-ikat-red) 60px 66px,
+      var(--color-bg-elevated) 66px 72px,
+      var(--color-ikat-indigo) 72px 78px,
+      var(--color-bg-elevated) 78px 84px,
+      var(--color-ikat-cream) 84px 90px,
+      var(--color-bg-elevated) 90px 96px,
+      var(--color-ikat-red) 96px 104px,
+      var(--color-bg-elevated) 104px 110px
+    );
+  background-size: 100% 110px;
+  background-repeat: repeat-y;
+}
+
+/* ----- hairline sweep (for sync-completed moment) ----- */
+@keyframes hairline-sweep {
+  0% { transform: translateX(-100%); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+.hairline-sweep::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--color-accent-gold),
+    transparent
+  );
+  animation: hairline-sweep 600ms ease-out;
+}
+
+/* ----- inputs ----- */
+.ak-input {
+  background-color: var(--color-bg-sunken);
+  border: 1px solid var(--color-border-hair);
+  color: var(--color-fg-primary);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: var(--font-sans);
+  width: 100%;
+  transition: border-color 120ms ease-out;
+}
+.ak-input:focus {
+  outline: none;
+  border-color: var(--color-accent-gold);
+  border-width: 2px;
+  padding: 9px 11px;
+}
+.ak-input::placeholder {
+  color: var(--color-fg-dim);
+}
+
+/* ----- buttons ----- */
+.ak-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  transition: all 80ms ease-out;
+  cursor: pointer;
+  border: 1px solid transparent;
+  user-select: none;
+}
+.ak-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ak-btn-primary {
+  background: var(--color-accent-gold);
+  color: var(--color-bg-deep);
+}
+.ak-btn-primary:hover:not(:disabled) {
+  background: var(--color-accent-deep);
+  color: var(--color-fg-primary);
+}
+.ak-btn-primary:active:not(:disabled) {
+  background: var(--color-accent-deep);
+  transform: translateY(1px);
+}
+.ak-btn-secondary {
+  background: transparent;
+  color: var(--color-accent-gold);
+  border-color: var(--color-accent-gold);
+}
+.ak-btn-secondary:hover:not(:disabled) {
+  background: rgba(217, 168, 90, 0.08);
+}
+.ak-btn-ghost {
+  background: transparent;
+  color: var(--color-fg-primary);
+}
+.ak-btn-ghost:hover:not(:disabled) {
+  background: var(--color-bg-raised);
+}
+.ak-btn-danger {
+  background: transparent;
+  color: var(--color-signal-down);
+  border-color: var(--color-border-sub);
+}
+.ak-btn-danger:hover:not(:disabled) {
+  border-color: var(--color-signal-down);
+  background: rgba(192, 81, 81, 0.08);
+}
+
+/* ----- card ----- */
+.ak-panel {
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-hair);
+  border-radius: var(--radius-sm);
+  position: relative;
+}
+
+/* ----- status pill ----- */
+.ak-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+  line-height: 1.4;
+}
+.ak-pill-up { color: var(--color-signal-up); background: rgba(122, 174, 76, 0.08); }
+.ak-pill-down { color: var(--color-signal-down); background: rgba(192, 81, 81, 0.08); }
+.ak-pill-warn { color: var(--color-signal-warn); background: rgba(224, 164, 58, 0.08); }
+.ak-pill-info { color: var(--color-signal-info); background: rgba(75, 163, 195, 0.08); }
+.ak-pill-muted { color: var(--color-fg-muted); background: transparent; border-color: var(--color-border-sub); }

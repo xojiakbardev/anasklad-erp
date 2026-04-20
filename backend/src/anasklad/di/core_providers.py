@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from anasklad.config import Settings, get_settings
 from anasklad.core.db.session import build_engine, build_session_factory
 from anasklad.core.db.uow import UnitOfWork
+from anasklad.core.security.crypto import CryptoService
 from anasklad.core.security.jwt import JwtService
 
 
@@ -37,6 +38,14 @@ class CoreProvider(Provider):
             yield client
         finally:
             await client.aclose()
+
+    @provide
+    def crypto(self, settings: Settings) -> CryptoService:
+        key = settings.credentials_fernet_key
+        if not key:
+            # Dev fallback — stable per-process but NOT persistent
+            key = CryptoService.generate_key()
+        return CryptoService(key)
 
     @provide
     def jwt_service(self, settings: Settings) -> JwtService:

@@ -5,6 +5,7 @@ from dishka import AsyncContainer, make_async_container
 
 from anasklad.di.core_providers import CoreProvider, DbRequestProvider
 from anasklad.modules.auth.provider import AuthProvider
+from anasklad.modules.integrations.provider import IntegrationsProvider
 
 
 def build_container() -> AsyncContainer:
@@ -12,4 +13,5 @@ def build_container() -> AsyncContainer:
         CoreProvider(),
         DbRequestProvider(),
         AuthProvider(),
+        IntegrationsProvider(),
     )

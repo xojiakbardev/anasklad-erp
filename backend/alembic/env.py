@@ -15,6 +15,7 @@ from anasklad.core.db.base import Base
 
 # Import models so they register with Base.metadata
 from anasklad.modules.auth.infrastructure import models as _auth_models  # noqa: F401
+from anasklad.modules.integrations.infrastructure import models as _integrations_models  # noqa: F401
 
 config = context.config
 

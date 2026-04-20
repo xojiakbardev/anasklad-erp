@@ -17,6 +17,7 @@ from anasklad.core.http.middleware import CorrelationIdMiddleware
 from anasklad.core.observability.logging import configure_logging, log
 from anasklad.di.container import build_container
 from anasklad.modules.auth.api.router import router as auth_router
+from anasklad.modules.integrations.api.router import router as integrations_router
 
 
 def create_app() -> FastAPI:
@@ -78,6 +79,7 @@ def create_app() -> FastAPI:
         return {"status": "ready"}
 
     app.include_router(auth_router, prefix="/api")
+    app.include_router(integrations_router, prefix="/api")
 
     setup_dishka(container, app)
     return app
