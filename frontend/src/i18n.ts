@@ -26,6 +26,7 @@ const uz = {
     finance: "Moliya",
     integrations: "Integratsiyalar",
     settings: "Sozlamalar",
+    reports: "Hisobotlar",
   },
   integrations: {
     title: "Integratsiyalar",
