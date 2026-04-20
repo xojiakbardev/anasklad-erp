@@ -5,7 +5,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { catalogApi } from "@/api/catalog";
+import { financeApi } from "@/api/finance";
 import { type Integration, integrationsApi } from "@/api/integrations";
+import { ordersApi } from "@/api/orders";
 import { IkatStripe } from "@/components/IkatStripe";
 import { Panel } from "@/components/Panel";
 import { ApiError } from "@/lib/api";
@@ -89,10 +91,27 @@ function IntegrationCard({ integration }: { integration: Integration }) {
   });
 
   const syncMut = useMutation({
-    mutationFn: () => catalogApi.syncIntegration(integration.id),
+    mutationFn: async () => {
+      const [cat, ord, fin] = await Promise.all([
+        catalogApi.syncIntegration(integration.id),
+        ordersApi.sync(integration.id),
+        financeApi.sync(integration.id),
+      ]);
+      return {
+        products: cat.products_upserted,
+        variants: cat.variants_upserted,
+        orders: ord.orders_upserted,
+        sales: fin.sales_upserted,
+        expenses: fin.expenses_upserted,
+      };
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["integrations"] });
       qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      qc.invalidateQueries({ queryKey: ["sales"] });
+      qc.invalidateQueries({ queryKey: ["expenses"] });
+      qc.invalidateQueries({ queryKey: ["finance"] });
     },
   });
 
@@ -159,7 +178,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
 
         {syncMut.data && (
           <div className="border border-[var(--color-signal-up)]/40 bg-[var(--color-signal-up)]/5 px-3 py-2 text-xs text-[var(--color-signal-up)] rounded-sm font-mono">
-            ✓ {syncMut.data.products_upserted} mahsulot · {syncMut.data.variants_upserted} SKU sinxronlangan
+            ✓ {syncMut.data.products} mahsulot · {syncMut.data.variants} SKU · {syncMut.data.orders} buyurtma · {syncMut.data.sales} sotuv · {syncMut.data.expenses} xarajat
           </div>
         )}
 
