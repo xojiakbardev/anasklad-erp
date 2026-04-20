@@ -1,0 +1,32 @@
+[importlinter]
+root_package = anasklad
+
+[importlinter:contract:core-forbids-modules]
+name = core must not import modules
+type = forbidden
+source_modules =
+    anasklad.core
+forbidden_modules =
+    anasklad.modules
+
+[importlinter:contract:modules-isolated]
+name = modules may only import each other's facades
+type = forbidden
+source_modules =
+    anasklad.modules.catalog
+    anasklad.modules.stocks
+    anasklad.modules.orders
+    anasklad.modules.finance
+    anasklad.modules.integrations
+    anasklad.modules.reporting
+    anasklad.modules.sync
+    anasklad.modules.catalog_cost
+forbidden_modules =
+    anasklad.modules.auth.api
+    anasklad.modules.auth.application
+    anasklad.modules.auth.domain
+    anasklad.modules.auth.infrastructure
+    anasklad.modules.catalog.api
+    anasklad.modules.catalog.application
+    anasklad.modules.catalog.domain
+    anasklad.modules.catalog.infrastructure

@@ -6,16 +6,61 @@ on:
   pull_request:
 
 jobs:
-  backend:
+  uzum-connector:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/uzum-connector
     steps:
       - uses: actions/checkout@v4
-      - name: Placeholder
-        run: echo "Backend CI wired in Sprint 1 (ruff, mypy, pytest, import-linter)."
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -e ".[dev]"
+      - run: ruff check src tests
+      - run: mypy src
+      - run: pytest -v
+
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: anasklad
+          POSTGRES_PASSWORD: anasklad_pass
+          POSTGRES_DB: anasklad_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd="pg_isready -U anasklad" --health-interval=5s
+          --health-timeout=5s --health-retries=5
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd="redis-cli ping" --health-interval=5s
+          --health-timeout=3s --health-retries=5
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: postgresql+asyncpg://anasklad:anasklad_pass@localhost:5432/anasklad_test
+      REDIS_URL: redis://localhost:6379/0
+      JWT_SECRET: test_secret_at_least_32_characters_long_xxxxx
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -e ../packages/uzum-connector
+      - run: pip install -e ".[dev]"
+      - run: ruff check src tests
+      - run: pytest -v
+      - run: lint-imports
 
   frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Placeholder
-        run: echo "Frontend CI wired in Sprint 2 (biome, tsc, vitest)."
+        run: echo "Frontend CI wired in Sprint 2."

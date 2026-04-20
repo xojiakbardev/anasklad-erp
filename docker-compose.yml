@@ -30,7 +30,30 @@ services:
       timeout: 3s
       retries: 5
 
-  # --- api + workers will be added in Sprint 1 ---
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      APP_ENV: development
+      DATABASE_URL: postgresql+asyncpg://anasklad:anasklad_pass@postgres:5432/anasklad
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:-dev_secret_change_me_to_long_random_string_at_least_32_chars}
+      JWT_ACCESS_TTL_MINUTES: 30
+      JWT_REFRESH_TTL_DAYS: 30
+      CREDENTIALS_FERNET_KEY: ${CREDENTIALS_FERNET_KEY:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "cd /app/backend && alembic upgrade heads && python -m anasklad.granian_entry"
 
 volumes:
   pg_data:
