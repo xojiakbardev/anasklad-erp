@@ -27,7 +27,9 @@ class SaleModel(Base):
 
     __tablename__ = "sales"
     __table_args__ = (
-        UniqueConstraint("source", "external_id", name="uq_sales_source_external"),
+        UniqueConstraint(
+            "tenant_id", "source", "external_id", name="uq_sales_tenant_source_external"
+        ),
         {"schema": "finance"},
     )
 
@@ -71,7 +73,9 @@ class ExpenseModel(Base):
 
     __tablename__ = "expenses"
     __table_args__ = (
-        UniqueConstraint("source", "external_id", name="uq_expenses_source_external"),
+        UniqueConstraint(
+            "tenant_id", "source", "external_id", name="uq_expenses_tenant_source_external"
+        ),
         {"schema": "finance"},
     )
 

@@ -44,7 +44,7 @@ class ProductRepository:
             updated_at=datetime.now(UTC),
         )
         stmt = stmt.on_conflict_do_update(
-            constraint="uq_products_source_external",
+            constraint="uq_products_tenant_source_external",
             set_={
                 "title": stmt.excluded.title,
                 "category": stmt.excluded.category,
@@ -186,7 +186,7 @@ class VariantRepository:
             updated_at=datetime.now(UTC),
         )
         stmt = stmt.on_conflict_do_update(
-            constraint="uq_variants_source_external",
+            constraint="uq_variants_tenant_source_external",
             set_={
                 "title": stmt.excluded.title,
                 "barcode": stmt.excluded.barcode,

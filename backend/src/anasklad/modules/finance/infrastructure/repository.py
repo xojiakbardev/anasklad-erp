@@ -26,7 +26,7 @@ class SaleRepository:
             if k not in ("id", "tenant_id", "source", "integration_id")
         }
         stmt = stmt.on_conflict_do_update(
-            constraint="uq_sales_source_external", set_=update_set
+            constraint="uq_sales_tenant_source_external", set_=update_set
         )
         await self._session.execute(stmt)
 
@@ -178,7 +178,7 @@ class ExpenseRepository:
             if k not in ("id", "tenant_id", "source", "integration_id")
         }
         stmt = stmt.on_conflict_do_update(
-            constraint="uq_expenses_source_external", set_=update_set
+            constraint="uq_expenses_tenant_source_external", set_=update_set
         )
         await self._session.execute(stmt)
 

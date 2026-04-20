@@ -7,6 +7,7 @@ from datetime import datetime
 from sqlalchemy import (
     BigInteger,
     DateTime,
+    ForeignKey,
     Integer,
     String,
     Text,
@@ -26,7 +27,9 @@ def _uuid() -> uuid.UUID:
 class FbsOrderModel(Base):
     __tablename__ = "fbs_orders"
     __table_args__ = (
-        UniqueConstraint("source", "external_id", name="uq_fbs_orders_source_external"),
+        UniqueConstraint(
+            "tenant_id", "source", "external_id", name="uq_fbs_orders_tenant_source_external"
+        ),
         {"schema": "orders"},
     )
 
@@ -68,15 +71,18 @@ class FbsOrderModel(Base):
 class FbsOrderItemModel(Base):
     __tablename__ = "fbs_order_items"
     __table_args__ = (
-        UniqueConstraint(
-            "order_id", "external_sku_id", name="uq_fbs_items_order_sku"
-        ),
+        UniqueConstraint("order_id", "external_sku_id", name="uq_fbs_items_order_sku"),
         {"schema": "orders"},
     )
 
     id: Mapped[uuid.UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=_uuid)
     tenant_id: Mapped[uuid.UUID] = mapped_column(PgUUID(as_uuid=True), nullable=False, index=True)
-    order_id: Mapped[uuid.UUID] = mapped_column(PgUUID(as_uuid=True), nullable=False, index=True)
+    order_id: Mapped[uuid.UUID] = mapped_column(
+        PgUUID(as_uuid=True),
+        ForeignKey("orders.fbs_orders.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
 
     external_sku_id: Mapped[int | None] = mapped_column(BigInteger)
     sku_title: Mapped[str | None] = mapped_column(String(512))

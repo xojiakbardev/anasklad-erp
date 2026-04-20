@@ -7,6 +7,7 @@ from datetime import datetime
 from sqlalchemy import (
     BigInteger,
     DateTime,
+    ForeignKey,
     String,
     Text,
     UniqueConstraint,
@@ -25,7 +26,9 @@ def _uuid() -> uuid.UUID:
 class IntegrationModel(Base):
     __tablename__ = "integrations"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "source", "label", name="uq_integration_tenant_source_label"),
+        UniqueConstraint(
+            "tenant_id", "source", "label", name="uq_integration_tenant_source_label"
+        ),
         {"schema": "integrations"},
     )
 
@@ -35,10 +38,8 @@ class IntegrationModel(Base):
     label: Mapped[str] = mapped_column(String(128), nullable=False)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="active")
 
-    # Fernet-encrypted credential (token)
     credentials_encrypted: Mapped[str] = mapped_column(Text, nullable=False)
 
-    # Rate-limit knobs, discovered adaptively
     rate_per_second: Mapped[float] = mapped_column(nullable=False, default=5.0)
     rate_burst: Mapped[int] = mapped_column(nullable=False, default=10)
 
@@ -57,7 +58,12 @@ class ShopModel(Base):
     )
 
     id: Mapped[uuid.UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=_uuid)
-    integration_id: Mapped[uuid.UUID] = mapped_column(PgUUID(as_uuid=True), nullable=False, index=True)
+    integration_id: Mapped[uuid.UUID] = mapped_column(
+        PgUUID(as_uuid=True),
+        ForeignKey("integrations.integrations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     tenant_id: Mapped[uuid.UUID] = mapped_column(PgUUID(as_uuid=True), nullable=False, index=True)
     external_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     name: Mapped[str] = mapped_column(String(256), nullable=False, server_default="")

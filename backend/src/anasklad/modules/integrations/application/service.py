@@ -103,10 +103,34 @@ class IntegrationService:
         return IntegrationWithShops(integration=integration, shops=shops)
 
     async def delete(self, *, tenant_id: uuid.UUID, integration_id: uuid.UUID) -> None:
+        """Delete an integration AND all synced data tied to it.
+
+        Cross-schema FKs are intentionally absent (modular monolith boundary),
+        so we explicitly clean up every schema that stored rows referencing
+        this integration. Catalog variants + FBS items + shops cascade
+        via intra-schema FKs; here we only delete the 'root' rows.
+        """
+        from sqlalchemy import delete as sa_delete
+
+        from anasklad.modules.catalog.infrastructure.models import ProductModel
+        from anasklad.modules.finance.infrastructure.models import ExpenseModel, SaleModel
+        from anasklad.modules.orders.infrastructure.models import FbsOrderModel
+
         async with self._uow:
             existed = await self._integrations.get(integration_id, tenant_id)
             if existed is None:
                 raise NotFoundError("integration not found")
+
+            session = self._uow.session
+            # Order matters only for readability; no cross-schema FKs enforce any ordering.
+            for model in (ProductModel, FbsOrderModel, SaleModel, ExpenseModel):
+                await session.execute(
+                    sa_delete(model).where(
+                        (model.tenant_id == tenant_id)
+                        & (model.integration_id == integration_id)
+                    )
+                )
+            # integrations.shops cascade-deletes via intra-schema FK on integration_id.
             await self._integrations.delete(integration_id, tenant_id)
             await self._uow.commit()
 

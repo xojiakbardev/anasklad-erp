@@ -42,7 +42,7 @@ class FbsOrderRepository:
         update_set["integration_id"] = stmt.excluded.integration_id
         update_set["shop_id"] = stmt.excluded.shop_id
         stmt = stmt.on_conflict_do_update(
-            constraint="uq_fbs_orders_source_external",
+            constraint="uq_fbs_orders_tenant_source_external",
             set_=update_set,
         ).returning(FbsOrderModel.id)
         return (await self._session.execute(stmt)).scalar_one()

@@ -9,6 +9,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     Float,
+    ForeignKey,
     Integer,
     String,
     Text,
@@ -28,13 +29,15 @@ def _uuid() -> uuid.UUID:
 class ProductModel(Base):
     __tablename__ = "products"
     __table_args__ = (
-        UniqueConstraint("source", "external_id", name="uq_products_source_external"),
+        UniqueConstraint(
+            "tenant_id", "source", "external_id", name="uq_products_tenant_source_external"
+        ),
         {"schema": "catalog"},
     )
 
     id: Mapped[uuid.UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=_uuid)
     tenant_id: Mapped[uuid.UUID] = mapped_column(PgUUID(as_uuid=True), nullable=False, index=True)
-    source: Mapped[str] = mapped_column(String(32), nullable=False)  # "uzum"
+    source: Mapped[str] = mapped_column(String(32), nullable=False)
     integration_id: Mapped[uuid.UUID] = mapped_column(PgUUID(as_uuid=True), nullable=False, index=True)
     shop_id: Mapped[uuid.UUID] = mapped_column(PgUUID(as_uuid=True), nullable=False, index=True)
 
@@ -56,14 +59,21 @@ class ProductModel(Base):
 class VariantModel(Base):
     __tablename__ = "variants"
     __table_args__ = (
-        UniqueConstraint("source", "external_id", name="uq_variants_source_external"),
+        UniqueConstraint(
+            "tenant_id", "source", "external_id", name="uq_variants_tenant_source_external"
+        ),
         {"schema": "catalog"},
     )
 
     id: Mapped[uuid.UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=_uuid)
     tenant_id: Mapped[uuid.UUID] = mapped_column(PgUUID(as_uuid=True), nullable=False, index=True)
     source: Mapped[str] = mapped_column(String(32), nullable=False)
-    product_id: Mapped[uuid.UUID] = mapped_column(PgUUID(as_uuid=True), nullable=False, index=True)
+    product_id: Mapped[uuid.UUID] = mapped_column(
+        PgUUID(as_uuid=True),
+        ForeignKey("catalog.products.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
 
     external_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     title: Mapped[str] = mapped_column(String(512), nullable=False)
