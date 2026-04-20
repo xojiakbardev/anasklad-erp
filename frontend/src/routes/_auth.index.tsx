@@ -3,7 +3,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
 import { financeApi } from "@/api/finance";
+import { integrationsApi } from "@/api/integrations";
 import { ordersApi } from "@/api/orders";
+import { OnboardingModal, useOnboarding } from "@/components/OnboardingModal";
 import { Panel } from "@/components/Panel";
 import { ProfitChart } from "@/components/ProfitChart";
 import { cn } from "@/lib/cn";
@@ -15,6 +17,12 @@ export const Route = createFileRoute("/_auth/")({
 
 function DashboardPage() {
   const { t } = useTranslation();
+  const onboarding = useOnboarding();
+
+  const { data: integrations } = useQuery({
+    queryKey: ["integrations"],
+    queryFn: integrationsApi.list,
+  });
 
   const { data: summary } = useQuery({
     queryKey: ["finance", "summary", 30],
@@ -37,8 +45,12 @@ function DashboardPage() {
     (ordersList?.counts_by_status?.CREATED ?? 0) +
     (ordersList?.counts_by_status?.PACKING ?? 0);
 
+  const showOnboarding =
+    onboarding.open || (integrations !== undefined && integrations.length === 0);
+
   return (
     <div className="p-8 space-y-6">
+      <OnboardingModal open={showOnboarding} onClose={onboarding.close} />
       <header>
         <div className="label-micro mb-2">ANASKLAD · TERMINAL</div>
         <h1 className="display-title text-4xl">{t("nav.dashboard")}</h1>

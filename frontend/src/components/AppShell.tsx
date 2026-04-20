@@ -2,6 +2,7 @@ import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
 import { IkatStripe } from "@/components/IkatStripe";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/cn";
 import { useAuth } from "@/stores/auth";
@@ -9,12 +10,12 @@ import { useAuth } from "@/stores/auth";
 const NAV = [
   { to: "/", label: "dashboard" as const },
   { to: "/integrations", label: "integrations" as const },
-  // Placeholders; implemented in later sprints.
   { to: "/products", label: "products" as const },
   { to: "/orders", label: "orders" as const },
   { to: "/stocks", label: "stocks" as const },
   { to: "/finance", label: "finance" as const },
   { to: "/reports", label: "reports" as const },
+  { to: "/help", label: "help" as const },
 ];
 
 export function AppShell() {
@@ -25,7 +26,6 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen grid grid-cols-[240px_1fr] grid-rows-[1fr_auto]">
-      {/* Sidebar */}
       <aside className="row-span-2 border-r border-[var(--color-border-hair)] flex flex-col bg-[var(--color-bg-raised)]">
         <div className="p-5 border-b border-[var(--color-border-hair)]">
           <Logo />
@@ -45,32 +45,29 @@ export function AppShell() {
                     : "text-[var(--color-fg-muted)] hover:text-[var(--color-fg-primary)] hover:bg-[var(--color-bg-elevated)]",
                 )}
               >
-                {isActive && (
-                  <IkatStripe className="absolute left-0 top-1 bottom-1" />
-                )}
+                {isActive && <IkatStripe className="absolute left-0 top-1 bottom-1" />}
                 <span className={cn(isActive && "ml-2")}>{t(`nav.${item.label}`)}</span>
               </Link>
             );
           })}
         </nav>
-        <div className="p-4 border-t border-[var(--color-border-hair)] text-xs">
+        <div className="p-4 border-t border-[var(--color-border-hair)] text-xs space-y-3">
+          <LanguageToggle />
           <div className="text-[var(--color-fg-muted)] truncate">{user?.email}</div>
           <button
             type="button"
             onClick={logout}
-            className="mt-2 label-micro hover:text-[var(--color-accent-gold)] cursor-pointer"
+            className="label-micro hover:text-[var(--color-accent-gold)] cursor-pointer"
           >
             {t("common.logout")}
           </button>
         </div>
       </aside>
 
-      {/* Main */}
       <main className="overflow-auto">
         <Outlet />
       </main>
 
-      {/* Status bar */}
       <footer className="col-start-2 border-t border-[var(--color-border-hair)] bg-[var(--color-bg-raised)] px-5 py-2 flex items-center justify-between text-xs font-mono text-[var(--color-fg-muted)]">
         <span>v0.1.0 · {import.meta.env.MODE}</span>
         <span>Anasklad-ERP · {new Date().getFullYear()}</span>

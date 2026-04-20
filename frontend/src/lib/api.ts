@@ -42,6 +42,26 @@ export class ApiError extends Error {
   ) {
     super(message);
   }
+
+  /**
+   * Translate a backend error code (e.g. "auth.invalid_credentials") to a
+   * user-facing string in the current i18n language. Falls back to the
+   * server-provided message when no translation exists.
+   */
+  translatedMessage(t: (key: string) => string): string {
+    const map: Record<string, string> = {
+      "auth.invalid_credentials": "errors.invalid_credentials",
+      "auth.email_taken": "errors.email_taken",
+      "auth.token_expired": "errors.token_expired",
+      "auth.token_invalid": "errors.token_expired",
+      "integration.uzum.auth": "errors.uzum_auth",
+      "integration.uzum.no_shops": "errors.uzum_no_shops",
+    };
+    const key = map[this.code];
+    if (!key) return this.message;
+    const localized = t(key);
+    return localized === key ? this.message : localized;
+  }
 }
 
 export async function handle<T>(promise: Promise<Response>): Promise<T> {
