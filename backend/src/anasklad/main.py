@@ -21,6 +21,7 @@ from anasklad.modules.catalog.api.router import router as catalog_router
 from anasklad.modules.finance.api.router import router as finance_router
 from anasklad.modules.integrations.api.router import router as integrations_router
 from anasklad.modules.orders.api.router import router as orders_router
+from anasklad.modules.reporting.api.router import router as reporting_router
 
 
 def create_app() -> FastAPI:
@@ -86,6 +87,7 @@ def create_app() -> FastAPI:
     app.include_router(catalog_router, prefix="/api")
     app.include_router(orders_router, prefix="/api")
     app.include_router(finance_router, prefix="/api")
+    app.include_router(reporting_router, prefix="/api")
 
     setup_dishka(container, app)
     return app
